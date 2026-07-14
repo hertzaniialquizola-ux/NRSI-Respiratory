@@ -1,0 +1,15 @@
+# Raw data downloads (re-fetch from EPA/CDC/Census instead of versioning large files)
+data/raw/*
+!data/raw/.gitkeep
+
+# R
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+renv/library/
+renv/staging/
+*.Rout
+
+# OS
+.DS_Store
