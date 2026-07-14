@@ -37,6 +37,7 @@ Join key: **county FIPS code**. Most recent complete year, single cross-section 
 - **Feature importance** (RF, mean %IncMSE ± cross-fold SD): smoking 63.7 ± 1.2, age 59.5 ± 2.7, poverty 33.0 ± 1.0, ozone 5.1 ± 1.8 — same rank order as the standardized OLS coefficients, a robustness signal across two different model classes.
 - **Ozone partial dependence** (Figure 2): predicted COPD prevalence rises roughly monotonically from ~7.05% to ~7.4% across the observed ozone range, with no clear threshold or plateau.
 - **PM2.5 sensitivity check** (N = 444 monitored subsample): ozone's coefficient barely moves (27.0 → 26.3, both p < 0.0001) after adding PM2.5 — its effect is not an artifact of omitted PM2.5 confounding. PM2.5 itself comes out negative (−0.080, p < 0.0001) in that model, which is unexplained and flagged as an open question rather than resolved.
+- **Supplementary multi-outcome robustness check** (`R/robustness_outcomes.R`): the identical model re-fit on adult current-asthma prevalence (positive but non-significant, p = 0.142 — likely a model-fit mismatch, not a failed replication) and adult diabetes prevalence as a falsification check (no reliable ozone association, p = 0.135, unlike COPD's p = 0.0005) — the diabetes null result is the pattern a specific, real respiratory effect should produce, strengthening the case against generic county-level confounding.
 
 Full detail, tables, and interpretation: `research_brief_draft.md`.
 

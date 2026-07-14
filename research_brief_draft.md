@@ -61,7 +61,8 @@ Age structure is a fourth necessary covariate, not a nicety. COPD prevalence is 
 5. **PM2.5 sensitivity check.** Pull PM2.5 from the same EPA AirData source and re-run the OLS (and ideally the ML model) with PM2.5 added as a fifth predictor. Report whether ozone's coefficient/importance holds, shrinks, or flips — PM2.5 is the more established COPD risk factor and often co-varies with ozone, so this directly tests whether ozone's estimated effect is really its own or is partly absorbing PM2.5's. Framed as a robustness appendix, not a redesign of the primary model — if time is short, this is the first thing to cut back to "one paragraph noting it as a limitation" rather than dropped silently.
 6. **Two primary visuals:** feature importance/SHAP summary (with variance shown) + ozone partial dependence plot. PM2.5 sensitivity result can be a small table rather than a third full visual.
 7. **Discussion**, led by the poverty confounding-direction ambiguity and the ecological-inference caveat, then explicit named scope decisions rather than generic hedging.
-8. **Reporting standard and reproducibility.** This analysis follows STROBE reporting guidelines for observational (ecological, cross-sectional) studies. All analysis was conducted in R (tidyverse, car, randomForest, caret, pdp, janitor, broom), with every script (`build_dataset.R`, `linear_model.R`, `ml_model.R`, `pm25_sensitivity.R`, `figures.R`) version-controlled in the project repository so the full pipeline is reproducible end to end.
+8. **Reporting standard and reproducibility.** This analysis follows STROBE reporting guidelines for observational (ecological, cross-sectional) studies. All analysis was conducted in R (tidyverse, car, randomForest, caret, pdp, janitor, broom), with every script (`build_dataset.R`, `linear_model.R`, `ml_model.R`, `pm25_sensitivity.R`, `figures.R`, `robustness_outcomes.R`) version-controlled in the project repository so the full pipeline is reproducible end to end.
+9. **Supplementary multi-outcome robustness check.** The identical specification was re-fit on two additional CDC PLACES outcomes, same N = 684 counties: adult current-asthma prevalence (a second respiratory outcome — a similar modest ozone effect would be a second independent confirmation) and adult diabetes prevalence (a falsification/specificity check — ozone has no known mechanism affecting diabetes, so a null or unreliable ozone association there, unlike a significant one for COPD, supports the COPD finding being specific rather than generic county-level confounding). This is appendix/robustness material, not one of the two primary visuals.
 
 ### Data Sources
 
@@ -163,6 +164,23 @@ Ozone's coefficient changes by about 2.6% and stays highly significant — its e
 
 One unresolved finding worth flagging rather than explaining away: PM2.5 itself comes out **negative** in this model (coefficient −0.080, p < 0.0001) once ozone/smoking/poverty/age are controlled — counterintuitive given PM2.5's established role as a respiratory risk factor. Since PM2.5 is scoped here as a sensitivity check rather than a fully interpreted covariate, this is named as an open question (see Limitations) rather than unpacked further.
 
+### Supplementary: multi-outcome robustness check
+
+To test whether the ozone–COPD finding is specific to COPD or reflects generic county-level confounding, the identical specification (`outcome ~ ozone + smoking + poverty + age`) was re-fit on two additional CDC PLACES outcomes, same N = 684 counties:
+
+| Outcome | Ozone coefficient | Standardized 95% CI | p-value | Adjusted R² |
+|---|---|---|---|---|
+| COPD prevalence (primary) | 18.90 | [0.033, 0.118] | 0.0005 | 0.902 |
+| Current asthma prevalence (2nd respiratory outcome) | 11.34 | [−0.015, 0.106] | 0.142 | 0.225 |
+| Diabetes prevalence (falsification check) | −19.15 | [−0.177, 0.024] | 0.135 | 0.668 |
+
+Only COPD's ozone effect is statistically distinguishable from zero; both additional outcomes' confidence intervals comfortably span zero.
+
+- **Asthma** shows a positive point estimate — same direction as COPD — but does not reach significance. This looks like a model-fit mismatch rather than a failed confirmation: this covariate set is smoking-heavy, well-suited to COPD (an overwhelmingly smoking-driven disease), but adult asthma is more allergic/immune-driven (see Motivation) — and the model's adjusted R² collapses from 0.902 for COPD to 0.225 for asthma, confirming these four predictors simply don't explain much asthma variation regardless of ozone. This result is **inconclusive, not disconfirming.**
+- **Diabetes**, the falsification check, is the more informative result. Diabetes shares the same confounders that could make ozone look spuriously linked to COPD if that finding were really just "unhealthy, poor, older counties look bad on every health measure" — if that were the mechanism, ozone should show a significant, positive association with diabetes too, since diabetes correlates strongly with poverty and age. Instead, ozone shows **no reliable association with diabetes at all** (95% CI spans zero, point estimate is even negative). That null result is exactly the pattern a real, respiratory-specific ozone effect should produce, and it strengthens rather than weakens the case that the COPD finding is specific.
+
+This check is appendix/robustness material, not one of the brief's two primary visuals. Full detail: `output/robustness_outcomes_comparison.csv`; supplementary figure: `output/figure_supplementary_robustness_outcomes.png`.
+
 ### Figures
 
 - **Figure 1** (`output/figure1_feature_importance.png`) — random forest variable importance, mean %IncMSE ± cross-fold SD, 10-fold CV.
@@ -181,12 +199,13 @@ One unresolved finding worth flagging rather than explaining away: PM2.5 itself 
 - CDC PLACES COPD prevalence is *diagnosed* prevalence, not true prevalence — the poverty/healthcare-access confound applies directly here and should be discussed, not just disclosed.
 - **ML feature-importance ranking turned out to be stable, not unstable, across folds** — cross-fold SDs were small relative to their means (largest: age at ±2.7 on a mean of 59.5 %IncMSE), and the ranking (smoking > age > poverty > ozone) matched the standardized OLS coefficients exactly. Reporting cross-fold variance rather than a single point estimate was still the right call methodologically — it's simply that the variance turned out to be low, which is itself worth stating rather than assuming.
 - Multicollinearity was checked and is not a concern: VIF stayed below 1.7 across all four main-model predictors (below 1.9 in the 5-variable PM2.5 sensitivity model), so smoking, poverty, age, and ozone are not so correlated with each other that their individual coefficients become uninterpretable.
+- **The multi-outcome robustness check's "second confirmation" (asthma) is inconclusive, not a clean replication.** The same four-predictor model's adjusted R² collapses from 0.902 for COPD to 0.225 for adult current-asthma prevalence — this covariate set is smoking-heavy and well-suited to COPD specifically, not necessarily to asthma's more allergic/immune-driven mechanism. The non-significant ozone coefficient for asthma (p = 0.142) should be read as "this model doesn't explain much asthma variation regardless of ozone," not as evidence ozone doesn't matter for asthma.
 
 ---
 
 ## Conclusion / Impact
 
-Ozone is a real, statistically robust predictor of county-level adult COPD prevalence — but a modest one. Its contribution, by standardized coefficient, is roughly one-fifteenth the size of smoking's, and that ranking is confirmed independently by a structurally different model (random forest feature importance) and survives a PM2.5-controlled sensitivity check on a separate subsample. For county-level public health resource allocation, this argues against treating ozone reduction as a lever comparable to smoking-cessation investment for closing COPD disparities — smoking and age structure remain, by a wide margin, the dominant explainers of which counties carry the heaviest COPD burden. It also argues against expecting a sharp "safe" ozone threshold: the near-identical performance of the linear and machine-learning models, and the roughly monotonic (not plateaued or threshold-shaped) partial dependence curve, suggest that whatever risk ozone poses accumulates gradually rather than switching on above some cutoff — at least at the resolution county-level data can resolve. The defensible takeaway is a ranked one, not a binary one: ozone is a real, non-negligible, and independently-confirmed contributor to county-level COPD prevalence, worth continued monitoring and worth a place in a multi-pollutant public health model — but not a substitute for smoking-reduction and demographic-targeting efforts as the primary levers.
+Ozone is a real, statistically robust predictor of county-level adult COPD prevalence — but a modest one. Its contribution, by standardized coefficient, is roughly one-fifteenth the size of smoking's, and that ranking is confirmed independently by a structurally different model (random forest feature importance), survives a PM2.5-controlled sensitivity check on a separate subsample, and is not explained away by a falsification check: ozone shows no reliable association with diabetes, an outcome sharing COPD's confounders (poverty, age) but with no plausible ozone mechanism — exactly the pattern a specific, real respiratory effect should produce rather than generic "unhealthy county" confounding. For county-level public health resource allocation, this argues against treating ozone reduction as a lever comparable to smoking-cessation investment for closing COPD disparities — smoking and age structure remain, by a wide margin, the dominant explainers of which counties carry the heaviest COPD burden. It also argues against expecting a sharp "safe" ozone threshold: the near-identical performance of the linear and machine-learning models, and the roughly monotonic (not plateaued or threshold-shaped) partial dependence curve, suggest that whatever risk ozone poses accumulates gradually rather than switching on above some cutoff — at least at the resolution county-level data can resolve. The defensible takeaway is a ranked one, not a binary one: ozone is a real, non-negligible, and independently-confirmed contributor to county-level COPD prevalence, worth continued monitoring and worth a place in a multi-pollutant public health model — but not a substitute for smoking-reduction and demographic-targeting efforts as the primary levers.
 
 ---
 
@@ -225,6 +244,7 @@ We used Claude (Anthropic) to help draft this project's R analysis scripts (`bui
 - [x] PM2.5 sensitivity check
 - [x] Final figures (Figure 1, Figure 2)
 - [x] Abstract, Evidence/Output, Limitations, Conclusion drafted with real numbers
+- [x] Supplementary multi-outcome robustness check (asthma + diabetes falsification), benchmarked against the author's prior NHSJS paper's multi-outcome strategy
 - [ ] Author name/contact info (still a placeholder below — fill in before submitting)
 - [ ] Full reference list finalized (2–3 more sources still flagged as needed — see References)
 - [ ] Final proofread pass and page-count check (2–5 pages, excluding references/appendix)

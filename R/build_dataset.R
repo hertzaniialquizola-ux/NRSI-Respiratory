@@ -10,6 +10,9 @@
 #      -> annual_conc_by_monitor_2025.zip
 #   2. CDC PLACES County Data (GIS-Friendly Format), 2025 release
 #      https://chronicdata.cdc.gov/500-Cities-Places/PLACES-County-Data-GIS-Friendly-Format-2025-releas/i46a-9kgh
+#      Also pulls CASTHMA_CrudePrev and DIABETES_CrudePrev, used only by
+#      R/robustness_outcomes.R (not the main COPD analysis) as a second
+#      respiratory outcome and a falsification/specificity check.
 #   3. Census ACS 5-Year Estimates, 2019-2023 vintage (table release year 2023)
 #      https://api.census.gov/data/2023/acs/acs5
 #      Variables: B17001_002E, B17001_001E (poverty), B01002_001E (median age)
@@ -99,7 +102,18 @@ places <- read_csv(places_url, show_col_types = FALSE) %>%
     FIPS               = str_pad(as.character(countyfips), 5, pad = "0"),
     COPD_CrudePrev     = as.numeric(copd_crudeprev),
     COPD_AdjPrev       = as.numeric(copd_adjprev),
-    CSMOKING_CrudePrev = as.numeric(csmoking_crudeprev)
+    CSMOKING_CrudePrev = as.numeric(csmoking_crudeprev),
+    # Extra outcomes for R/robustness_outcomes.R -- not required for the main
+    # analytic sample (see the filter() below), just carried along so that
+    # script can build its own per-outcome complete-case subsamples:
+    #   - CASTHMA: adult current asthma prevalence, a second respiratory
+    #     outcome, direct analog to the primary COPD outcome
+    #   - DIABETES: a falsification/specificity check -- ozone has no known
+    #     mechanism affecting diabetes, so if ozone "predicted" this too,
+    #     that would suggest the COPD result is picking up general
+    #     county-level confounding rather than a real respiratory effect
+    CASTHMA_CrudePrev  = as.numeric(casthma_crudeprev),
+    DIABETES_CrudePrev = as.numeric(diabetes_crudeprev)
   )
 
 message(sprintf(
