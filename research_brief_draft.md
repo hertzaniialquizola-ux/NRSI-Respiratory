@@ -10,7 +10,7 @@
 
 ---
 
-## Title *(draft — refine after results are in)*
+## Title
 **Does County-Level Ozone Exposure Predict Adult COPD Prevalence? A Regression and Machine Learning Analysis Controlling for Smoking, Poverty, and Age**
 
 ## Track
@@ -21,11 +21,9 @@ Solo entry — [Your name / contact info here]
 
 ---
 
-## Abstract *(draft skeleton, 250-word max — DO NOT submit until bracketed placeholders are filled with real results)*
+## Abstract (241 words)
 
-Chronic obstructive pulmonary disease (COPD) is a leading cause of morbidity in the United States, driven predominantly by smoking but increasingly linked to ambient air pollution. While particulate matter's role in respiratory disease is well studied, ground-level ozone — a secondary pollutant that inflames airway tissue on contact — is comparatively understudied at the population level, particularly for adult COPD rather than pediatric asthma. This project asks whether county-level ozone exposure predicts adult COPD prevalence in the U.S., and how much it contributes relative to smoking prevalence, poverty rate, and age structure. We merge EPA AirData annual mean ozone concentration, CDC PLACES COPD and smoking prevalence, and Census ACS poverty rate and median age at the county (FIPS) level for the most recent complete year, covering **N = [TBD] of ~3,100 U.S. counties** (final N depends on EPA monitor coverage — reported here up front since it bounds how much weight the results can carry). We fit an OLS baseline with variance inflation factor (VIF) diagnostics, then a gradient boosting / random forest model with k-fold cross-validation, feature importance (with cross-fold variance reported, not just point estimates), and a partial dependence plot isolating ozone's functional relationship with COPD prevalence. A PM2.5 sensitivity check tests whether ozone's estimated contribution survives alongside the more established particulate-matter risk factor. [Result placeholder: linear model R² = X, ML model R² = Y; ozone's relative importance = Z; partial dependence shape = linear/threshold/plateau]. [Placeholder: agreement or divergence between linear and ML models, and what that implies]. Poverty's dual role — potentially raising true COPD burden while suppressing diagnosed prevalence through reduced healthcare access — is discussed as a key interpretive limitation, alongside the ecological-inference caveat: a county-level association does not establish that ozone exposure affects COPD risk at the individual level. The analysis is a single-year cross-section, not a panel, and has no independent validation dataset; both are named explicitly as scope decisions rather than omissions. [Placeholder: one-sentence takeaway once findings are in].
-
-*(Longer than 250 words at current draft length with all placeholders spelled out — trim once real numbers replace the brackets; the N and ecological-fallacy sentences should survive the cut.)*
+Chronic obstructive pulmonary disease (COPD) is driven predominantly by smoking but increasingly linked to ambient air pollution, particularly ozone — a secondary pollutant that inflames airway tissue on contact and is understudied for adult COPD. This project asks whether county-level ozone predicts adult COPD prevalence, and how much it contributes relative to smoking, poverty, and age. Merging EPA ozone, CDC PLACES COPD/smoking prevalence, and Census ACS poverty/age data yields N = 684 of roughly 3,100 U.S. counties (78.8% dropped, mostly for lack of an ozone monitor — only 754 counties nationwide have one). An OLS model finds ozone significantly predicts COPD prevalence (coefficient = 18.9, p < 0.001) net of the other covariates, though its standardized effect (0.08) is far smaller than smoking's (1.19). A 10-fold cross-validated random forest ranks predictors in the same order — smoking > age > poverty > ozone — and performs slightly worse out-of-sample than the linear model (CV R² 0.87 vs 0.90), suggesting a near-linear relationship rather than a threshold effect. Ozone's coefficient is essentially unchanged (27.0 to 26.3, both p < 0.0001) after adding PM2.5 on a smaller (N = 444) sensitivity subsample, so its effect does not depend on omitted PM2.5 confounding. Poverty's dual role — raising true COPD burden while potentially suppressing diagnosed prevalence through reduced healthcare access — is a key limitation, alongside the ecological-inference caveat that a county-level association does not establish individual-level risk. This is a single-year cross-section without independent validation, both explicit scope decisions.
 
 ---
 
@@ -56,7 +54,7 @@ Age structure is a fourth necessary covariate, not a nicety. COPD prevalence is 
 
 ## Method
 
-1. **Build the dataset, report final N.** Merge EPA AirData (ozone), CDC PLACES (adult COPD + smoking prevalence), and Census ACS 5-Year Estimates (poverty rate + median age / %65+) on FIPS code for the most recent complete year. Use **annual mean ozone concentration** computed from EPA's daily monitor data, rather than the regulatory design value (4th-highest daily max, 3-year average) — annual mean is the standard exposure metric in chronic-exposure health literature; the design value is a NAAQS-compliance construct and would need explicit justification if used instead. State the final county count up front, prominently (abstract, not just methods) — EPA ozone monitors cover roughly 600–1,000 of ~3,100 U.S. counties, and monitor placement is not random, so this bounds how much weight the results can carry.
+1. **Build the dataset, report final N.** Merge EPA AirData (ozone), CDC PLACES (adult COPD + smoking prevalence), and Census ACS 5-Year Estimates (poverty rate + median age / %65+) on FIPS code for the most recent complete year. Use **annual mean ozone concentration** computed from EPA's daily monitor data, rather than the regulatory design value (4th-highest daily max, 3-year average) — annual mean is the standard exposure metric in chronic-exposure health literature; the design value is a NAAQS-compliance construct and would need explicit justification if used instead. State the final county count up front, prominently (abstract, not just methods) — EPA ozone monitors cover only 754 of 3,222 U.S. counties, and monitor placement is not random, so this bounds how much weight the results can carry. (Final analytic sample: N = 684 — see Evidence/Output.)
 2. **Linear regression baseline + VIF check.** OLS predicting COPD prevalence from ozone + smoking + poverty + age. Run variance inflation factor diagnostics on all four predictors before interpreting anything — smoking, poverty, and age are all plausibly correlated with each other, and unchecked multicollinearity undermines any feature-importance claim.
 3. **Predictive ML model.** Gradient boosting or random forest, same four predictors, k-fold cross-validation for R²/RMSE, feature importance (or SHAP) **reported with cross-fold variance, not just a single point-estimate ranking** — with ~600–900 rows a boosted tree's importance ranking can be unstable, and showing that variance is more credible than hiding it. Include a partial dependence plot for ozone specifically — showing *how* the relationship behaves (linear, threshold, plateau), not just how much it matters.
 4. **Compare the two models directly.** Agreement = robustness signal. Disagreement = evidence of a nonlinear/threshold relationship worth discussing.
@@ -84,26 +82,104 @@ Join key: county FIPS code.
 ---
 
 ## Evidence / Output
-*TBD — Day 15 (build day). Populate with: final N after merge, VIF values, OLS coefficients, ML model R²/RMSE, feature importance ranking, partial dependence plot description, and the two visuals.*
+
+### Final sample
+
+Merging EPA AirData ozone, CDC PLACES COPD/smoking prevalence, and Census ACS poverty/median age on FIPS code yielded **N = 684 counties**, out of 3,222 total U.S. counties/county-equivalents — **2,538 dropped (78.8%)**. The dropped-county breakdown (full detail in `data/dropped_counties.csv`):
+
+| Reason dropped | Counties |
+|---|---|
+| No ozone monitor | 2,477 |
+| COPD prevalence suppressed (PLACES, small population) | 61 |
+| **Total dropped** | **2,538** |
+
+EPA ozone monitor coverage is the dominant constraint by far: only **754 of 3,222 U.S. counties** have any ozone monitor (643 have PM2.5). Monitor placement is not random — it skews toward higher-population and higher-pollution areas — so N=684 should be read as a monitored-county sample, not a representative national sample. This is the single biggest limitation of the analysis and is treated as such throughout (see Limitations).
+
+### Linear model (OLS baseline)
+
+`copd ~ ozone + smoking + poverty + age`, N = 684, adjusted R² = 0.902 (in-sample):
+
+| Predictor | Coefficient | Std. error | p-value |
+|---|---|---|---|
+| Ozone | 18.90 | 5.39 | 0.0005 |
+| Smoking | 0.407 | 0.009 | < 0.001 |
+| Poverty | 8.67 | 0.61 | < 0.001 |
+| Age | 0.161 | 0.005 | < 0.001 |
+
+**VIF check** (all predictors): ozone 1.01, smoking 1.62, poverty 1.68, age 1.18 — all well below the conventional concern threshold (5–10), so multicollinearity does not distort these coefficient estimates.
+
+**Standardized coefficients** (needed to compare predictors measured in different units — ozone in ppm, smoking/poverty in %, age in years):
+
+| Predictor | Standardized coefficient |
+|---|---|
+| Smoking | 1.19 |
+| Age | 0.82 |
+| Poverty | 0.40 |
+| Ozone | 0.08 |
+
+Ozone is a statistically significant predictor of COPD prevalence net of smoking, poverty, and age — but its standardized effect is roughly **1/15th the size of smoking's**. It matters, but it is not close to the dominant driver.
+
+### Random forest + 10-fold cross-validation
+
+Both models were cross-validated on the *same* 10 folds so the comparison is apples-to-apples out-of-sample, not the random forest's CV score against the linear model's in-sample R² above:
+
+| Model | CV R² (mean ± SD) | CV RMSE (mean ± SD) |
+|---|---|---|
+| Linear | 0.899 ± 0.031 | 0.561 ± 0.071 |
+| Random forest | 0.869 ± 0.031 | 0.645 ± 0.095 |
+
+The linear model modestly **outperforms** the more flexible random forest out-of-sample. Since a random forest can capture nonlinearities a linear model cannot, its failure to beat OLS here is itself evidence that the true ozone–COPD relationship is close to linear, rather than a shortcoming of the ML approach.
+
+**Feature importance** (random forest, %IncMSE, mean ± cross-fold SD across the 10 folds — Figure 1):
+
+| Predictor | Mean %IncMSE | Cross-fold SD |
+|---|---|---|
+| Smoking | 63.7 | 1.2 |
+| Age | 59.5 | 2.7 |
+| Poverty | 33.0 | 1.0 |
+| Ozone | 5.1 | 1.8 |
+
+This is the **same rank order** as the standardized OLS coefficients above. Two structurally different models — one linear and one a flexible ensemble — agreeing on both which predictors matter and roughly how much is a robustness signal for the ranking, not just a coincidence of one method. Cross-fold SDs are also small relative to their means (largest: age at ±2.7 on a mean of 59.5), so this ranking is stable across folds rather than an artifact of any one training split.
+
+**Ozone partial dependence** (Figure 2): predicted COPD prevalence rises from about 7.05% at the lowest observed county ozone levels to roughly 7.3–7.4% at the highest — essentially monotonically increasing, with local noise rather than a clean flat region, a sharp inflection, or a plateau. This shape is consistent with the CV comparison above: no strong nonlinear/threshold structure for the random forest to have exploited. The data-density rug on Figure 2 shows most counties cluster between ozone ≈ 0.038–0.05; the curve's upward spike above ≈0.055 falls in a comparatively data-sparse region and should be read cautiously rather than as a confirmed acceleration.
+
+### PM2.5 sensitivity check
+
+On the smaller subsample of counties with a monitored PM2.5 value (N = 444, vs. 684 in the main sample), two models were fit on the *identical* rows to isolate the effect of adding PM2.5 from the effect of the smaller sample:
+
+| | Ozone coefficient | p-value |
+|---|---|---|
+| Without PM2.5 | 27.0 | < 0.0001 |
+| With PM2.5 added | 26.3 | < 0.0001 |
+
+Ozone's coefficient changes by about 2.6% and stays highly significant — its estimated effect on COPD prevalence is **not an artifact of omitted PM2.5 confounding**. VIF on the 5-variable model (ozone 1.02, smoking 1.85, poverty 1.89, age 1.41, PM2.5 1.18) confirms this holds without multicollinearity distorting it, despite ozone and PM2.5 both being pollutants.
+
+One unresolved finding worth flagging rather than explaining away: PM2.5 itself comes out **negative** in this model (coefficient −0.080, p < 0.0001) once ozone/smoking/poverty/age are controlled — counterintuitive given PM2.5's established role as a respiratory risk factor. Since PM2.5 is scoped here as a sensitivity check rather than a fully interpreted covariate, this is named as an open question (see Limitations) rather than unpacked further.
+
+### Figures
+
+- **Figure 1** (`output/figure1_feature_importance.png`) — random forest variable importance, mean %IncMSE ± cross-fold SD, 10-fold CV.
+- **Figure 2** (`output/figure2_ozone_pdp.png`) — partial dependence of predicted COPD prevalence on ozone, with a rug showing the actual ozone distribution.
 
 ---
 
 ## Limitations
-*Partial draft — expand after Day 15 build:*
-- **Ecological inference limitation (name this explicitly, first).** This is a county-level aggregate analysis being used to speak to an individual-level disease mechanism — ozone inflaming individual airway tissue. A county-level association between ozone and COPD prevalence does not establish that ozone exposure affects COPD risk at the individual level (the ecological fallacy). Any causal-sounding language in the Conclusion needs to be checked against this before submission.
-- EPA ozone monitors do not cover every U.S. county (roughly 600–1,000 of ~3,100); final N will be smaller than the full county count, and monitor placement is not random — likely biased toward higher-population/higher-pollution areas. This is a coverage bias, not just a sample-size note, and it bounds how far the results generalize.
+
+- **Ecological inference limitation (leads the list, as planned).** This is a county-level aggregate analysis being used to speak to an individual-level disease mechanism — ozone inflaming individual airway tissue. A county-level association between ozone and COPD prevalence does not establish that ozone exposure affects COPD risk at the individual level (the ecological fallacy). Any causal-sounding language in the Conclusion needs to be checked against this before submission.
+- **EPA ozone monitor coverage is the dominant limitation, with exact figures.** Only 754 of 3,222 U.S. counties have any ozone monitor (643 have PM2.5); the final analytic sample is N = 684 after also requiring non-suppressed COPD prevalence — 2,538 counties (78.8%) were dropped, 2,477 for no ozone monitor and 61 for suppressed COPD prevalence. Monitor placement is not random — it's likely biased toward higher-population/higher-pollution areas — so this is a coverage bias that bounds how far the results generalize, not just a sample-size note.
 - **Annual mean ozone is used as the exposure metric** rather than the EPA design value; this is the standard choice in chronic-exposure literature but is itself a simplification of year-round, sub-daily exposure variation.
-- **PM2.5 is only a sensitivity check, not a full covariate** — if ozone and PM2.5 turn out to be highly correlated at the county level, the sensitivity check may not cleanly separate their effects, and that ambiguity should be reported rather than resolved by assertion.
+- **PM2.5 is only a sensitivity check, not a full covariate.** Ozone's coefficient held up well (27.0 → 26.3, both p < 0.0001) after adding PM2.5 on the smaller N = 444 monitored subsample, with low VIF throughout (max 1.89) — so ozone and PM2.5 do not appear to be highly collinear at the county level in this data, and the sensitivity check does cleanly separate their effects. However, **PM2.5 itself came out with a counterintuitive negative coefficient** (−0.080, p < 0.0001) in that same model, which is not explained by anything in this analysis and is flagged here as an open question rather than resolved by assertion.
 - Single-year cross-section — no ability to establish temporal precedence or rule out reverse/confounded time trends. Named as a scope decision, not an oversight.
 - No independent validation dataset for this analysis.
 - CDC PLACES COPD prevalence is *diagnosed* prevalence, not true prevalence — the poverty/healthcare-access confound applies directly here and should be discussed, not just disclosed.
-- With ~600–900 counties in the final sample, ML feature-importance rankings can be unstable — this is why cross-fold variance is reported for feature importance (see Method), not just a single ranking. If variance across folds is high, that itself is a finding to report, not a result to hide.
-- [Add: anything specific that surfaces once VIF/model results are in — e.g., if smoking, poverty, and age show high collinearity, that limits how cleanly their individual coefficients can be interpreted.]
+- **ML feature-importance ranking turned out to be stable, not unstable, across folds** — cross-fold SDs were small relative to their means (largest: age at ±2.7 on a mean of 59.5 %IncMSE), and the ranking (smoking > age > poverty > ozone) matched the standardized OLS coefficients exactly. Reporting cross-fold variance rather than a single point estimate was still the right call methodologically — it's simply that the variance turned out to be low, which is itself worth stating rather than assuming.
+- Multicollinearity was checked and is not a concern: VIF stayed below 1.7 across all four main-model predictors (below 1.9 in the 5-variable PM2.5 sensitivity model), so smoking, poverty, age, and ozone are not so correlated with each other that their individual coefficients become uninterpretable.
 
 ---
 
 ## Conclusion / Impact
-*TBD — write last, after Evidence and Limitations are final. One paragraph: does ozone add predictive value beyond smoking/poverty, and what would that mean for county-level public health resource allocation?*
+
+Ozone is a real, statistically robust predictor of county-level adult COPD prevalence — but a modest one. Its contribution, by standardized coefficient, is roughly one-fifteenth the size of smoking's, and that ranking is confirmed independently by a structurally different model (random forest feature importance) and survives a PM2.5-controlled sensitivity check on a separate subsample. For county-level public health resource allocation, this argues against treating ozone reduction as a lever comparable to smoking-cessation investment for closing COPD disparities — smoking and age structure remain, by a wide margin, the dominant explainers of which counties carry the heaviest COPD burden. It also argues against expecting a sharp "safe" ozone threshold: the near-identical performance of the linear and machine-learning models, and the roughly monotonic (not plateaued or threshold-shaped) partial dependence curve, suggest that whatever risk ozone poses accumulates gradually rather than switching on above some cutoff — at least at the resolution county-level data can resolve. The defensible takeaway is a ranked one, not a binary one: ozone is a real, non-negligible, and independently-confirmed contributor to county-level COPD prevalence, worth continued monitoring and worth a place in a multi-pollutant public health model — but not a substitute for smoking-reduction and demographic-targeting efforts as the primary levers.
 
 ---
 
@@ -121,20 +197,27 @@ Join key: county FIPS code.
 
 ---
 
-## AI Use Transparency Statement *(draft — follows the deck's required format)*
+## AI Use Transparency Statement
 
 Per slide 16, the statement must cover: which AI tools were used, what each was used for, which parts received AI assistance, how claims/citations were verified, how outputs were checked for accuracy, and who takes responsibility.
 
-**Draft:**
+**Final statement:**
 
-We used Claude (Anthropic) to assist with structuring this research brief around the hackathon's required framework, identifying peer-reviewed background literature on ozone and COPD, and clarifying statistical concepts (variance inflation factor, partial dependence plots) during method planning. Claude was not used to generate results, fabricate citations, or produce analysis the author cannot personally explain. All claims, citations, calculations, and outputs were reviewed and independently verified by the author. The author takes full responsibility for the final submission.
-
-*(Finalize after the analysis is run — explicitly note whether AI was used for debugging code, and confirm every number in the brief was checked against actual model output before submission.)*
+We used Claude (Anthropic) to help draft this project's R analysis scripts (`build_dataset.R`, `linear_model.R`, `ml_model.R`, `pm25_sensitivity.R`, `figures.R`), debug environment, package, and data issues encountered while running them (e.g. a CRAN-archived package requiring an r-universe install, column-name mismatches against the actual merged dataset), structure this research brief around the hackathon's required framework, identify peer-reviewed background literature on ozone and COPD, and clarify statistical concepts (variance inflation factor, k-fold cross-validation, partial dependence plots, standardized coefficients) during method planning and interpretation. Claude was not used to generate results, fabricate citations, or produce analysis the author cannot personally explain. Every script was run locally by the author in RStudio, and every number quoted in this brief — sample sizes, coefficients, VIF values, cross-validated R²/RMSE, feature importance, and the PM2.5 sensitivity comparison — was checked against that console output before being included, not taken on faith from any AI-drafted summary. The author takes full responsibility for the final submission.
 
 ---
 
-## Day 1 Checklist (per event timeline)
+## Checklist (per event timeline)
 - [x] Track: Health & Life Sciences
 - [x] Solo/team status — **Solo**
 - [x] Research question
 - [x] Initial method plan
+- [x] Dataset built, final N reported (684, from 3,222 counties)
+- [x] Linear model + VIF check
+- [x] ML model + cross-validation + feature importance + partial dependence
+- [x] PM2.5 sensitivity check
+- [x] Final figures (Figure 1, Figure 2)
+- [x] Abstract, Evidence/Output, Limitations, Conclusion drafted with real numbers
+- [ ] Author name/contact info (still a placeholder below — fill in before submitting)
+- [ ] Full reference list finalized (2–3 more sources still flagged as needed — see References)
+- [ ] Final proofread pass and page-count check (2–5 pages, excluding references/appendix)
