@@ -113,7 +113,7 @@ source("R/figures.R")
 - **PM2.5 is a sensitivity check only, not a full covariate.** Ozone's coefficient held up well after adding PM2.5 (27.0 → 26.3, both p < 0.0001, on a matched N = 444 subsample) with low VIF throughout — but PM2.5 itself came out with an unexplained negative coefficient, flagged as an open question.
 - Single-year cross-section — no ability to establish temporal precedence.
 - No independent validation dataset for this analysis.
-- CDC PLACES COPD prevalence is *diagnosed* prevalence, not true prevalence — the poverty/healthcare-access confound applies directly here.
+- **CDC PLACES COPD prevalence is *diagnosed*, not true, prevalence** — its underlying measure is a BRFSS self-report question ("ever told by a doctor..."), and self-reported diagnosis is known to substantially undercount spirometry-confirmed disease: in the same NHANES sample, only 6.0% of adults 40-79 self-reported a COPD diagnosis vs. 14.0-15.4% with spirometry-confirmed airflow obstruction (Tilert et al., 2013, *Respiratory Research*, doi:10.1186/1465-9921-14-103). That this gap plausibly widens with reduced healthcare access is this project's own inference, not a claim that paper makes directly — see `research_brief_draft.md` Limitations for the full framing.
 - ML feature-importance rankings turned out to be **stable** across folds (cross-fold SDs small relative to their means) and matched the standardized OLS ranking exactly — reporting cross-fold variance was still the right methodological call, it just turned out low.
 - The ozone×poverty interaction came back null (p = 0.571), unlike SPIROMICS AIR's individual-level finding — likely a resolution issue (county-average vs. individual/neighborhood-level design), not a contradiction of that literature.
 
