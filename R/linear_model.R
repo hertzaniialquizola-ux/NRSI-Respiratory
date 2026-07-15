@@ -105,6 +105,59 @@ std_coefs <- tidy(ols_model_std) %>%
 print(std_coefs)
 
 # ---------------------------------------------------------
+# 5b. Ozone x poverty interaction
+#
+#    The Motivation section cites SPIROMICS AIR's finding that ozone
+#    and neighborhood poverty INTERACT -- COPD patients in poorer
+#    neighborhoods respond worse to the same ozone exposure -- and
+#    argues poverty should be treated as an effect-modifier, not just
+#    a control-and-forget covariate. That claim needs an actual
+#    interaction term, not just the additive model above, or the
+#    brief is asserting more sophistication than it tested.
+#
+#    Ozone and poverty are mean-centered before interacting -- standard
+#    practice so the main-effect coefficients stay interpretable at the
+#    sample mean and any multicollinearity between the main effects and
+#    the product term is purely structural, not substantive.
+# ---------------------------------------------------------
+interaction_df <- model_df %>%
+  mutate(
+    ozone_c   = ozone - mean(ozone),
+    poverty_c = poverty - mean(poverty)
+  )
+
+interaction_model <- lm(
+  copd ~ ozone_c * poverty_c + smoking + age,
+  data = interaction_df
+)
+
+summary(interaction_model)
+
+interaction_coefs <- tidy(interaction_model, conf.int = TRUE)
+print(interaction_coefs)
+
+# GVIF on the interaction model (car::vif() reports GVIF^(1/(2*df)) for
+# terms with >1 df; here every term has 1 df so it's directly comparable
+# to the VIF values above)
+vif_interaction <- car::vif(interaction_model)
+print(vif_interaction)
+
+write_csv(interaction_coefs, "output/linear_model_interaction_coefficients.csv")
+
+interaction_term <- interaction_coefs %>% filter(term == "ozone_c:poverty_c")
+cat(sprintf(
+  "\nOzone x poverty interaction: coefficient = %.3f, p = %.4f\n",
+  interaction_term$estimate, interaction_term$p.value
+))
+cat(
+  if (interaction_term$p.value < 0.05) {
+    "Significant: poverty DOES modify ozone's association with COPD prevalence\nin this data -- report the direction and magnitude, don't just flag significance.\n"
+  } else {
+    "Not significant at alpha=0.05: this data does NOT show poverty modifying\nozone's association with COPD prevalence. Report this as a genuine null result\nfor the interaction (distinct from poverty's own main-effect confound, which\nis still real and already established) -- don't quietly drop the interaction\ntest just because it came back null.\n"
+  }
+)
+
+# ---------------------------------------------------------
 # 6. Residual diagnostics (quick sanity check / appendix figure)
 # ---------------------------------------------------------
 png("output/linear_model_diagnostics.png", width = 900, height = 900)

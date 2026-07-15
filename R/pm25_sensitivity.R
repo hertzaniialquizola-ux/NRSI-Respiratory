@@ -43,6 +43,50 @@ cat("(main analytic sample was N=684; this one additionally requires\n",
     " a PM2.5 monitor, so it will be smaller — that's expected.)\n")
 
 # ---------------------------------------------------------
+# 1b. Characterize how the PM2.5-monitored subsample differs from the
+#     counties dropped for lacking a PM2.5 monitor. This matters because
+#     the ozone coefficient shifts noticeably (about 19 -> 27) just from
+#     restricting to this subsample, BEFORE PM2.5 is even added as a
+#     covariate -- if that shift went unexplained, it would look like an
+#     unacknowledged inconsistency. Comparing means on both sides shows
+#     whether it's a real compositional difference (consistent with the
+#     non-random monitor-placement bias already discussed elsewhere in
+#     the brief) rather than an error.
+# ---------------------------------------------------------
+main_df <- df %>%
+  select(
+    copd    = copd_crude_prev,
+    ozone   = ozone_mean,
+    smoking = csmoking_crude_prev,
+    poverty = poverty_rate,
+    age     = median_age,
+    pm25    = pm25_mean
+  ) %>%
+  filter(!is.na(ozone), !is.na(copd), !is.na(smoking), !is.na(poverty), !is.na(age))
+
+subsample_comparison <- main_df %>%
+  mutate(has_pm25 = !is.na(pm25)) %>%
+  group_by(has_pm25) %>%
+  summarise(
+    n             = n(),
+    mean_ozone    = mean(ozone),
+    mean_smoking  = mean(smoking),
+    mean_poverty  = mean(poverty),
+    mean_age      = mean(age),
+    mean_copd     = mean(copd),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(has_pm25))
+
+cat(sprintf(
+  "\nHow does the PM2.5-monitored subsample (N=%d) differ from the counties\ndropped for lacking a PM2.5 monitor (N=%d)?\n",
+  sum(!is.na(main_df$pm25)), sum(is.na(main_df$pm25))
+))
+print(subsample_comparison)
+
+write_csv(subsample_comparison, "output/pm25_subsample_comparison.csv")
+
+# ---------------------------------------------------------
 # 2. Two models on the IDENTICAL subsample. Fitting both on
 #    the same rows isolates "what changes when PM2.5 is added"
 #    from "what changes because the sample is smaller" — those
