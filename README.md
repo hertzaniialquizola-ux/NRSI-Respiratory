@@ -123,7 +123,7 @@ Claude (Anthropic) was used to help draft this project's R analysis scripts, deb
 
 ## Author
 
-Solo entry — [Your name / contact info]
+Solo entry — Hertzan D. Alquizola II, hertzan.alquizola@gmail.com
 
 ## License
 

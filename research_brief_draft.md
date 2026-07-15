@@ -17,7 +17,7 @@
 Health & Life Sciences
 
 ## Author(s)
-Solo entry — [Your name / contact info here]
+Solo entry — Hertzan D. Alquizola II, hertzan.alquizola@gmail.com
 
 ---
 
