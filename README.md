@@ -38,6 +38,8 @@ Join key: **county FIPS code**. Most recent complete year, single cross-section 
 - **Ozone partial dependence** (Figure 2): predicted COPD prevalence rises roughly monotonically from ~7.05% to ~7.4% across the observed ozone range, with no clear threshold or plateau.
 - **PM2.5 sensitivity check** (N = 444 monitored subsample): ozone's coefficient barely moves (27.0 → 26.3, both p < 0.0001) after adding PM2.5 — its effect is not an artifact of omitted PM2.5 confounding. PM2.5 itself comes out negative (−0.080, p < 0.0001) in that model, which is unexplained and flagged as an open question rather than resolved.
 - **Supplementary multi-outcome robustness check** (`R/robustness_outcomes.R`): the identical model re-fit on adult current-asthma prevalence (positive but non-significant, p = 0.142 — likely a model-fit mismatch, not a failed replication) and adult diabetes prevalence as a falsification check (no reliable ozone association, p = 0.135, unlike COPD's p = 0.0005) — the diabetes null result is the pattern a specific, real respiratory effect should produce, strengthening the case against generic county-level confounding.
+- **Ozone × poverty interaction**: not significant (coefficient = 64.2, p = 0.571) — this data doesn't show poverty modifying ozone's effect the way SPIROMICS AIR's individual-level cohort did, most likely because this is a coarser county-average design; poverty remains a real confound, just not a detectable effect-modifier here.
+- **PM2.5-monitored subsample characterization**: the N=444 PM2.5-monitored counties are younger, less-smoking, more impoverished, and lower-COPD than the 240 dropped for lacking a PM2.5 monitor — this compositional difference, not omitted confounding, explains why the baseline ozone coefficient is higher in the PM2.5 sensitivity check (27.0) than in the main N=684 model (18.9).
 
 Full detail, tables, and interpretation: `research_brief_draft.md`.
 
@@ -45,6 +47,7 @@ Full detail, tables, and interpretation: `research_brief_draft.md`.
 
 1. **Build the dataset, report final N.** Merge EPA AirData ozone (annual mean, computed from daily data — not the regulatory design value), CDC PLACES (COPD + smoking prevalence), and Census ACS (poverty rate + median age) on FIPS code. EPA ozone monitors cover only 754 of 3,222 U.S. counties, so the final N (684) is reported up front, prominently, since it bounds how much weight the results can carry.
 2. **Linear regression baseline + VIF check.** OLS predicting COPD prevalence from ozone + smoking + poverty + age. VIF is checked across all four predictors before interpreting any coefficient.
+2b. **Ozone×poverty interaction** (`R/linear_model.R`), testing SPIROMICS AIR's effect-modification finding directly rather than only citing it.
 3. **Predictive ML model.** Gradient boosting or random forest, same four predictors, k-fold cross-validation for R²/RMSE, feature importance reported **with cross-fold variance** (not a single point-estimate ranking — importance can be unstable at this sample size), and a partial dependence plot for ozone specifically.
 4. **Compare the two models directly.** Agreement = robustness signal. Disagreement = evidence of a nonlinear/threshold relationship worth discussing.
 5. **PM2.5 sensitivity check.** Re-run with PM2.5 added as a fifth predictor to test whether ozone's estimated contribution survives alongside the more established particulate-matter risk factor. Scoped as a robustness appendix, not a full second model.
@@ -70,7 +73,8 @@ Full detail, tables, and interpretation: `research_brief_draft.md`.
 │   ├── linear_model.R       # OLS + VIF (ozone, smoking, poverty, age)
 │   ├── ml_model.R           # random forest + CV + importance variance
 │   ├── pm25_sensitivity.R   # robustness check: does ozone survive with PM2.5 added?
-│   └── figures.R            # final feature importance + partial dependence plots
+│   ├── figures.R            # final feature importance + partial dependence plots
+│   └── robustness_outcomes.R # 2nd respiratory outcome (asthma) + falsification check (diabetes)
 ├── output/                # all model outputs: coefficient/VIF/CV tables, .rds models, figures
 ├── NRSI-Respiratory.Rproj  # open this in RStudio to set the working directory
 ├── install_packages.R      # run once to install all required R packages
@@ -93,6 +97,7 @@ source("R/build_dataset.R")
 source("R/linear_model.R")
 source("R/ml_model.R")
 source("R/pm25_sensitivity.R")
+source("R/robustness_outcomes.R")
 
 # Generate figures
 source("R/figures.R")
@@ -110,6 +115,7 @@ source("R/figures.R")
 - No independent validation dataset for this analysis.
 - CDC PLACES COPD prevalence is *diagnosed* prevalence, not true prevalence — the poverty/healthcare-access confound applies directly here.
 - ML feature-importance rankings turned out to be **stable** across folds (cross-fold SDs small relative to their means) and matched the standardized OLS ranking exactly — reporting cross-fold variance was still the right methodological call, it just turned out low.
+- The ozone×poverty interaction came back null (p = 0.571), unlike SPIROMICS AIR's individual-level finding — likely a resolution issue (county-average vs. individual/neighborhood-level design), not a contradiction of that literature.
 
 ## AI Use Transparency
 
